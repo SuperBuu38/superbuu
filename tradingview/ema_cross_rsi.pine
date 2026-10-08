@@ -1,0 +1,33 @@
+//@version=6
+indicator("EMA Cross + RSI", shorttitle="EMAx RSI", overlay=true)
+
+// ── Paramètres ──────────────────────────────────────────────
+fastLen  = input.int(9,   "EMA rapide",  minval=1)
+slowLen  = input.int(21,  "EMA lente",   minval=1)
+rsiLen   = input.int(14,  "Longueur RSI", minval=1)
+rsiOB    = input.int(70,  "RSI surachat")
+rsiOS    = input.int(30,  "RSI survente")
+useRsi   = input.bool(true, "Filtrer les signaux avec le RSI")
+
+// ── Calculs ─────────────────────────────────────────────────
+emaFast = ta.ema(close, fastLen)
+emaSlow = ta.ema(close, slowLen)
+rsi     = ta.rsi(close, rsiLen)
+
+crossUp   = ta.crossover(emaFast, emaSlow)
+crossDown = ta.crossunder(emaFast, emaSlow)
+
+buySignal  = crossUp   and (not useRsi or rsi < rsiOB)
+sellSignal = crossDown and (not useRsi or rsi > rsiOS)
+
+// ── Affichage ───────────────────────────────────────────────
+pFast = plot(emaFast, "EMA rapide", color=color.new(color.teal, 0), linewidth=2)
+pSlow = plot(emaSlow, "EMA lente",  color=color.new(color.orange, 0), linewidth=2)
+fill(pFast, pSlow, color = emaFast > emaSlow ? color.new(color.teal, 85) : color.new(color.orange, 85))
+
+plotshape(buySignal,  "Achat", shape.triangleup,   location.belowbar, color.new(color.green, 0), size=size.small, text="BUY")
+plotshape(sellSignal, "Vente", shape.triangledown, location.abovebar, color.new(color.red, 0),   size=size.small, text="SELL")
+
+// ── Alertes ─────────────────────────────────────────────────
+alertcondition(buySignal,  "Signal d'achat", "EMA Cross + RSI : signal d'achat sur {{ticker}} à {{close}}")
+alertcondition(sellSignal, "Signal de vente", "EMA Cross + RSI : signal de vente sur {{ticker}} à {{close}}")
